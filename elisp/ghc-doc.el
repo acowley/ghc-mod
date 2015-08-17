@@ -65,9 +65,21 @@ tell application \"Safari\"
 end tell" uri)))
     (do-applescript script)))
 
+(defun ghc-resolve-base-reexports (mod)
+"A partial mapping of GHC module names to corresponding public
+API module names."
+  (cond
+    ((string-equal mod "GHC-Unicode") "Data-Char")
+    ((string-equal mod "GHC-List") "Data-List")
+    ((string-equal mod "GHC-IO-Exception") "Control-Exception")
+    (t mod)))
+
 (defun ghc-display-document (pkg-ver-path mod haskell-org &optional symbol)
   (let* ((pkg  (ghc-pkg-ver-path-get-pkg pkg-ver-path))
-         (mod- (ghc-replace-character mod ?. ?-))
+         (mod- (let ((tmp (ghc-replace-character mod ?. ?-)))
+                 (if (string-equal pkg "base")
+                     (ghc-resolve-base-reexports tmp)
+                     tmp)))
 	 (ver  (ghc-pkg-ver-path-get-ver pkg-ver-path))
 	 (path (ghc-pkg-ver-path-get-path pkg-ver-path))
 	 (local (format ghc-doc-local-format path mod-))
